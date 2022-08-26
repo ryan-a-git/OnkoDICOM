@@ -18,7 +18,7 @@ from src.View.mainpage.MainPage import UIMainWindow
 
 from src.View.PTCTFusion.OpenPTCTPatientWindow import UIOpenPTCTPatientWindow
 from src.Model.PTCTDictContainer import PTCTDictContainer
-
+import logging
 
 class FirstTimeWelcomeWindow(QtWidgets.QMainWindow, UIFirstTimeWelcomeWindow):
     update_directory = QtCore.Signal(str)
@@ -35,6 +35,7 @@ class FirstTimeWelcomeWindow(QtWidgets.QMainWindow, UIFirstTimeWelcomeWindow):
         """
             Function to update the default directory
         """
+        logging.debug("update_new_directory called")
         self.update_directory.emit(new_directory)
         self.go_open_patient_window()
 
@@ -42,6 +43,7 @@ class FirstTimeWelcomeWindow(QtWidgets.QMainWindow, UIFirstTimeWelcomeWindow):
         """
             Function to progress to the OpenPatientWindow
         """
+        logging.debug("go_open_patient_window called")
         self.go_next_window.emit()
 
 
@@ -60,12 +62,14 @@ class WelcomeWindow(QtWidgets.QMainWindow, UIWelcomeWindow):
         """
         Function to progress to the OpenPatientWindow
         """
+        logging.debug("go_open_patient_window called")
         self.go_next_window.emit()
 
     def open_batch_window(self):
         """
         Function to progress to the BatchProcessingWindow
         """
+        logging.debug("open_batch_window called")
         self.go_batch_window.emit()
 
 
@@ -84,6 +88,7 @@ class OpenPatientWindow(QtWidgets.QMainWindow, UIOpenPatientWindow):
             self.scan_directory_for_patient()
 
     def open_patient(self, progress_window):
+        logging.debug("open_patient called")
         self.go_next_window.emit(progress_window)
 
 
@@ -101,6 +106,7 @@ class ImageFusionWindow(QtWidgets.QMainWindow, UIImageFusionWindow):
             self.scan_directory_for_patient()
 
     def update_ui(self):
+        logging.debug("update_ui called")
         # Instantiate a local new PatientDictContainer
         patient_dict_container = PatientDictContainer()
         patient = patient_dict_container.get("basic_info")
@@ -110,6 +116,7 @@ class ImageFusionWindow(QtWidgets.QMainWindow, UIImageFusionWindow):
             self.update_patient()
 
     def open_patient(self, progress_window):
+        logging.debug("open_patient called")
         self.go_next_window.emit(progress_window)
 
 
@@ -135,6 +142,7 @@ class OpenPTCTPatientWindow(QtWidgets.QMainWindow, UIOpenPTCTPatientWindow):
         Activates the OpenPTCTPatientWindow for use
         :param progress_window: The OnkoDICOM progress window
         """
+        logging.debug("open_patient called")
         self.go_next_window.emit(progress_window)
 
 
@@ -161,6 +169,7 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
         self.pet_ct_tab.load_pt_ct_signal.connect(self.initialise_pt_ct)
 
     def update_ui(self):
+        logging.debug("update_ui called")
         create_initial_model()
         self.setup_central_widget()
         self.setup_actions()
@@ -175,9 +184,11 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
         self.pet_ct_tab.load_pt_ct_signal.connect(self.initialise_pt_ct)
 
     def initialise_pt_ct(self):
+        logging.debug("initialise_pt_ct called")
         self.pt_ct_signal.emit()
 
     def load_pt_ct_tab(self):
+        logging.debug("load_pt_ct_tab called")
         pcd = PTCTDictContainer()
         if not pcd.is_empty():
             self.pet_ct_tab.load_pet_ct()
@@ -187,6 +198,7 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
         """
         Function to handle the Open patient button being clicked
         """
+        logging.debug("open_new_patient called")
         confirmation_dialog = QMessageBox.information(
             self, 'Open new patient?',
             'Opening a new patient will close the currently opened patient. '
@@ -194,12 +206,15 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
             QMessageBox.Yes | QMessageBox.No)
 
         if confirmation_dialog == QMessageBox.Yes:
+            logging.debug("confirmation_dialog true")
             self.open_patient_window.emit()
 
     def open_image_fusion(self):
+        logging.debug("open_image_fusion true")
         self.image_fusion_signal.emit()
 
     def update_image_fusion_ui(self):
+        logging.debug("update_image_fusion_ui called")
         mvd = MovingDictContainer()
         if not mvd.is_empty():
             read_images_for_fusion()
@@ -209,6 +224,7 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
         """
         Sends signal to initiate pyradiomics analysis
         """
+        logging.debug("pyradiomics_handler called")
         if which('plastimatch') is not None:
             if hashed_path == '':
                 confirm_pyradi = QMessageBox.information(
@@ -234,6 +250,7 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
                 "Plastimatch's executable is installed.")
 
     def cleanup(self):
+        logging.debug("cleanup called")
         patient_dict_container = PatientDictContainer()
         patient_dict_container.clear()
         # Close 3d vtk widget
@@ -242,9 +259,10 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
         self.cleanup_pt_ct_viewer()
 
     def cleanup_image_fusion(self):
-        # Explicity destroy objects - the purpose of this is to clear
-        # any image fusion tabs that have been used previously.
-        # Try-catch in the event user has not prompted image-fusion.
+        """ Explicity destroy objects - the purpose of this is to clear
+        any image fusion tabs that have been used previously.
+        Try-catch in the event user has not prompted image-fusion. """
+        logging.debug("cleanup_image_fusion called")
         try:
             del self.image_fusion_view_coronal
             del self.image_fusion_view_sagittal
@@ -260,7 +278,7 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
         moving_dict_container.clear()
 
     def cleanup_pt_ct_viewer(self):
-
+        logging.debug("cleanup_pt_ct_viewer called")
         pt_ct_dict_container = PTCTDictContainer()
         pt_ct_dict_container.clear()
         self.pet_ct_tab.initialised = False
@@ -270,6 +288,7 @@ class MainWindow(QtWidgets.QMainWindow, UIMainWindow):
             pass
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        logging.debug("closeEvent called")
         patient_dict_container = PatientDictContainer()
         if patient_dict_container.get("rtss_modified") \
                 and hasattr(self, "structures_tab"):
@@ -340,19 +359,22 @@ class PyradiProgressBar(QtWidgets.QWidget):
         :param value:   Percentage value to be displayed
         :param text:    To display what ROI currently being processed
         """
-
+        logging.debug("on_update called")
         # When generating the nrrd file, the percentage starts at 0
         # and reaches 25
         if value == 0:
             self.label.setText("Generating nrrd file")
+            logging.debug("Generating NRRD file - The segmentation masks are generated between the range 25 and 50")
         # The segmentation masks are generated between the range 25 and
         # 50
         elif value == 25:
             self.label.setText("Generating segmentation masks")
+            logging.debug("Generating NRRD file - pyradiomics analysis is carried out over each segmentation mask")
         # Above 50, pyradiomics analysis is carried out over each
         # segmentation mask
         elif value in range(50, 100):
             self.label.setText("Calculating features for " + text)
+            logging.debug("Generating NRRD file - pyradiomics analysis is carried out over each segmentation mask (>50)")
         # Set the percentage value
         self.progress_bar.setValue(value)
 
@@ -362,4 +384,5 @@ class PyradiProgressBar(QtWidgets.QWidget):
             completion = QMessageBox.information(
                 self, "Complete", "Task has been completed successfully"
             )
+            logging.debug("Completed generation of NRRD file")
             self.progress_complete.emit()
